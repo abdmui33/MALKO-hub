@@ -661,6 +661,11 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.2}
       <div class="topbar-title">Good day, Muizz 👋</div>
       <div class="topbar-sub" id="dash-date"></div>
     </div>
+    <div style="display:flex;gap:4px">
+      <button class="btn btn-ghost btn-xs" id="dash-all" onclick="setDashPeriod('all')" style="color:var(--accent);border-color:var(--accent);background:var(--accentpale)">All</button>
+      <button class="btn btn-ghost btn-xs" id="dash-year" onclick="setDashPeriod('year')">This Year</button>
+      <button class="btn btn-ghost btn-xs" id="dash-month" onclick="setDashPeriod('month')">This Month</button>
+    </div>
     <div class="topbar-actions">
       <button class="btn btn-ghost" onclick="nav('new-quo',document.querySelector('[onclick*=new-quo]'))">+ Quotation</button>
       <button class="btn btn-primary" onclick="nav('new-inv',document.querySelector('[onclick*=new-inv]'))">+ Invoice</button>
@@ -770,6 +775,7 @@ This is a computer-generated document.</textarea></div>
           <div class="fgrp"><label>Invoice Date</label><input type="date" id="i-date"></div>
           <div class="fgrp"><label>Due Date</label><input type="date" id="i-due"></div>
           <div class="fgrp"><label>Ref Quotation</label><input id="i-refq" placeholder="QUO-xxx"></div>
+          <div class="fgrp"><label>Payment Date</label><input type="date" id="i-pdate" title="Date payment was received"></div>
         </div>
       </div>
     </div>
@@ -899,7 +905,10 @@ This is a computer-generated document.</textarea></div>
 <div id="pg-pl" class="page hidden">
   <div class="topbar">
     <div><div class="topbar-title">P&amp;L Report</div><div class="topbar-sub">Profit &amp; Loss — ready for LHDN / IRB Form B</div></div>
-    <button class="btn btn-gold" onclick="exportPL()">⬇ Export for IRB</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="pl-yr" onchange="renderPL()" style="padding:6px 10px;font-size:12px;border-radius:7px;background:var(--g2);border:1px solid var(--border2);color:var(--text1)"><option value="all">All Years</option></select>
+      <button class="btn btn-gold" onclick="exportPL()">⬇ Export for IRB</button>
+    </div>
   </div>
   <div class="content">
     <div class="stats" style="grid-template-columns:repeat(4,1fr)">
@@ -951,10 +960,12 @@ This is a computer-generated document.</textarea></div>
           <label>Your Apps Script Web App URL</label>
           <input id="gs-url" placeholder="https://script.google.com/macros/s/AKfyc.../exec" value="">
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="saveGsUrl()">Save & Test Connection</button>
-          <button class="btn btn-ghost" onclick="syncNow()">↻ Sync Now</button>
+          <button class="btn btn-ghost" onclick="syncNow()">↻ Pull from Sheets</button>
+          <button class="btn btn-primary" onclick="pushAllToSheets()">⬆ Push All to Sheets</button>
           <button class="btn btn-ghost" onclick="exportLocalJSON()">⬇ Backup Local Data</button>
+          <button class="btn btn-ghost" onclick="importJSON()">⬆ Import Backup</button>
         </div>
         <div id="conn-status" style="margin-top:12px;font-size:12px;color:var(--text2)"></div>
       </div>
@@ -1017,6 +1028,7 @@ const LS = {
 
 let trkFilter = 'all';
 let currentPreviewDoc = null;
+let dashPeriod = 'all';
 
 // ═══════════════════════════════════════════
 // SEED DATA — all 15 existing jobs pre-loaded
@@ -1292,7 +1304,7 @@ function collect(t){
   const wrap=document.getElementById(t+'-items');
   const items=[...wrap.children].map(r=>{
     const ins=r.querySelectorAll('input');
-    return{desc:ins[0].value,price:parseFloat(ins[1].value)||0,qty:parseFloat(ins[2].value)||1,amount:parseFloat(ins[3].value)||0};
+    return{desc:ins[1].value,price:parseFloat(ins[2].value)||0,qty:parseFloat(ins[3].value)||1,amount:parseFloat(ins[4].value)||0};
   }).filter(i=>i.desc.trim());
   const disc=parseFloat(document.getElementById(t+'-disc').value)||0;
   const taxR=parseFloat(document.getElementById(t+'-tax').value)||0;
@@ -1321,7 +1333,7 @@ function collect(t){
   }).filter(c=>c.vendor.trim());
   const share=parseFloat(document.getElementById('i-share').value)||100;
 
-  return{...base,type:'INV',docNumber:document.getElementById('i-num').value,date:document.getElementById('i-date').value,dueDate:document.getElementById('i-due').value,refQuo:document.getElementById('i-refq').value,notes:document.getElementById('i-notes').value,terms:document.getElementById('i-terms').value,costs,malkoShare:share,status:'pending'};
+  return{...base,type:'INV',docNumber:document.getElementById('i-num').value,date:document.getElementById('i-date').value,dueDate:document.getElementById('i-due').value,refQuo:document.getElementById('i-refq').value,paymentDate:document.getElementById('i-pdate').value,notes:document.getElementById('i-notes').value,terms:document.getElementById('i-terms').value,costs,malkoShare:share,status:'pending'};
 }
 
 // ═══════════════════════════════════════════
@@ -1376,6 +1388,7 @@ function resetForm(t){
     document.getElementById('i-date').value=today;
     const due=new Date();due.setDate(due.getDate()+30);
     document.getElementById('i-due').value=due.toISOString().split('T')[0];
+    document.getElementById('i-pdate').value='';
     document.getElementById('i-disc').value='0';document.getElementById('i-tax').value='0';
     document.getElementById('i-items').innerHTML='';addLI('i');
     document.getElementById('i-costs').innerHTML='';
@@ -1464,12 +1477,25 @@ function printPDF(){window.print();}
 // ═══════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════
+function setDashPeriod(p){
+  dashPeriod=p;
+  ['all','year','month'].forEach(k=>{
+    const b=document.getElementById('dash-'+k);if(!b)return;
+    const on=k===p;
+    b.style.color=on?'var(--accent)':'';
+    b.style.borderColor=on?'var(--accent)':'';
+    b.style.background=on?'var(--accentpale)':'';
+  });
+  renderDash();
+}
+
 function renderDash(){
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('en-MY',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
+  const now=new Date();
   const docs=LS.arr('documents');
-  const invs=docs.filter(d=>d.type==='INV');
-  const quos=docs.filter(d=>d.type==='QUO');
+  const inPeriod=d=>{if(dashPeriod==='all'||!d.date)return true;const dt=new Date(d.date+'T00:00:00');if(dashPeriod==='year')return dt.getFullYear()===now.getFullYear();return dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear();};
+  const invs=docs.filter(d=>d.type==='INV'&&inPeriod(d));
+  const quos=docs.filter(d=>d.type==='QUO'&&inPeriod(d));
 
   const totalInv=invs.reduce((s,d)=>s+parseFloat(d.total||0),0);
   const totalCosts=invs.reduce((s,d)=>s+((d.costs||[]).reduce((cs,c)=>cs+parseFloat(c.amount||0),0)),0);
@@ -1573,8 +1599,10 @@ function renderTracker(){
         </select>
       </td>
       <td>
-        <div style="display:flex;gap:5px">
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-xs" onclick="viewDoc('${d.docNumber}')">View</button>
+          <button class="btn btn-ghost btn-xs" onclick="editDoc('${d.docNumber}')">Edit</button>
+          ${d.type==='QUO'?`<button class="btn btn-gold btn-xs" onclick="convertToInv('${d.docNumber}')">→INV</button>`:''}
           <button class="btn btn-danger btn-xs" onclick="delDoc('${d.docNumber}')">Del</button>
         </div>
       </td>
@@ -1585,7 +1613,7 @@ function renderTracker(){
 function updStatus(num,status){
   const docs=LS.arr('documents');
   const d=docs.find(x=>x.docNumber===num);
-  if(d){d.status=status;LS.set('documents',docs);syncToSheets(d);}
+  if(d){d.status=status;if(status==='paid'&&!d.paymentDate)d.paymentDate=new Date().toISOString().split('T')[0];LS.set('documents',docs);syncToSheets(d);}
   renderDash();
   toast(num+' → '+status,'ok');
 }
@@ -1600,6 +1628,63 @@ function delDoc(num){
   LS.set('documents',LS.arr('documents').filter(d=>d.docNumber!==num));
   renderTracker();renderDash();
   toast(num+' deleted','err');
+}
+
+function editDoc(num){
+  const d=LS.arr('documents').find(x=>x.docNumber===num);
+  if(!d)return;
+  const t=d.type==='INV'?'i':'q';
+  const pg=d.type==='INV'?'new-inv':'new-quo';
+  nav(pg,document.querySelector(`[onclick*="${pg}"]`));
+  document.getElementById(t+'-cname').value=d.clientName||'';
+  document.getElementById(t+'-cattn').value=d.clientAttn||'';
+  document.getElementById(t+'-caddr').value=d.clientAddr||'';
+  document.getElementById(t+'-cemail').value=d.clientEmail||'';
+  document.getElementById(t+'-cphone').value=d.clientPhone||'';
+  document.getElementById(t+'-disc').value=d.discount||0;
+  document.getElementById(t+'-tax').value=d.taxRate||0;
+  document.getElementById(t+'-notes').value=d.notes||'';
+  document.getElementById(t+'-terms').value=d.terms||'';
+  document.getElementById(t+'-items').innerHTML='';
+  (d.items||[]).forEach(it=>addLI(t,it.desc,it.price,it.qty));
+  if(t==='q'){
+    document.getElementById('q-num').value=d.docNumber;
+    document.getElementById('quo-pill').textContent=d.docNumber;
+    document.getElementById('q-date').value=d.date||'';
+    document.getElementById('q-valid').value=d.validity||14;
+  }else{
+    document.getElementById('i-num').value=d.docNumber;
+    document.getElementById('inv-pill').textContent=d.docNumber;
+    document.getElementById('i-date').value=d.date||'';
+    document.getElementById('i-due').value=d.dueDate||'';
+    document.getElementById('i-refq').value=d.refQuo||'';
+    document.getElementById('i-pdate').value=d.paymentDate||'';
+    document.getElementById('i-costs').innerHTML='';
+    (d.costs||[]).forEach(c=>addCost('i',c.vendor,c.amount,c.cat,c.paid));
+    document.getElementById('i-share').value=d.malkoShare||100;
+    calcCosts('i');
+  }
+  calcTot(t);
+  toast('Editing '+num,'info');
+}
+
+function convertToInv(num){
+  const d=LS.arr('documents').find(x=>x.docNumber===num);
+  if(!d)return;
+  nav('new-inv',document.querySelector('[onclick*="new-inv"]'));
+  document.getElementById('i-cname').value=d.clientName||'';
+  document.getElementById('i-cattn').value=d.clientAttn||'';
+  document.getElementById('i-caddr').value=d.clientAddr||'';
+  document.getElementById('i-cemail').value=d.clientEmail||'';
+  document.getElementById('i-cphone').value=d.clientPhone||'';
+  document.getElementById('i-disc').value=d.discount||0;
+  document.getElementById('i-tax').value=d.taxRate||0;
+  document.getElementById('i-notes').value=d.notes||'';
+  document.getElementById('i-refq').value=d.docNumber;
+  document.getElementById('i-items').innerHTML='';
+  (d.items||[]).forEach(it=>addLI('i',it.desc,it.price,it.qty));
+  calcTot('i');
+  toast('Loaded from '+num+' — review & save as invoice','info');
 }
 
 // ═══════════════════════════════════════════
@@ -1652,6 +1737,7 @@ function saveCli(){
   const idx=clients.findIndex(x=>x.id==c.id);
   if(idx>=0)clients[idx]=c;else clients.push(c);
   LS.set('clients',clients);
+  syncClientToSheets(c);
   refreshSelects();renderCli();closeCliModal();renderDash();
   toast(name+' saved','ok');
 }
@@ -1660,7 +1746,13 @@ function saveCli(){
 // P&L
 // ═══════════════════════════════════════════
 function renderPL(){
-  const invs=LS.arr('documents').filter(d=>d.type==='INV');
+  const yrSel=document.getElementById('pl-yr');
+  const invAll=LS.arr('documents').filter(d=>d.type==='INV');
+  const years=[...new Set(invAll.map(d=>d.date?.substring(0,4)).filter(Boolean))].sort().reverse();
+  const prevYr=yrSel.value;
+  yrSel.innerHTML='<option value="all">All Years</option>'+years.map(y=>`<option value="${y}"${y===prevYr?' selected':''}>${y}</option>`).join('');
+  const yr=yrSel.value||'all';
+  const invs=invAll.filter(d=>yr==='all'||d.date?.startsWith(yr));
   let totalRev=0,totalCost=0,totalNet=0,vendorOwed=0;
 
   const jobRows=invs.map(d=>{
@@ -1881,7 +1973,8 @@ function mergeFromSheets(data){
     const local = LS.arr('documents');
     const merged = [...local];
     data.documents.forEach(d=>{
-      if(!merged.find(x=>x.docNumber===d.docNumber)) merged.push(d);
+      const idx=merged.findIndex(x=>x.docNumber===d.docNumber);
+      if(idx>=0) merged[idx]=d; else merged.push(d);
     });
     LS.set('documents', merged);
   }
@@ -1889,7 +1982,8 @@ function mergeFromSheets(data){
     const local = LS.arr('clients');
     const merged = [...local];
     data.clients.forEach(c=>{
-      if(!merged.find(x=>x.id==c.id)) merged.push(c);
+      const idx=merged.findIndex(x=>x.id==c.id);
+      if(idx>=0) merged[idx]=c; else merged.push(c);
     });
     LS.set('clients', merged);
     refreshSelects();
@@ -1912,6 +2006,27 @@ async function syncToSheets(doc){
   }
 }
 
+async function syncClientToSheets(client){
+  const url=LS.get('gs_url');
+  if(!url)return;
+  try{await fetch(url,{method:'POST',body:JSON.stringify({action:'save_client',client})});}catch(e){}
+}
+
+async function pushAllToSheets(){
+  const url=LS.get('gs_url');
+  if(!url){toast('Set up sync URL first','err');nav('settings',document.querySelector('[onclick*=settings]'));return;}
+  updateSyncUI('syncing');
+  toast('Pushing all data to Sheets...','info');
+  const docs=LS.arr('documents');
+  const clients=LS.arr('clients');
+  let pushed=0;
+  for(const d of docs){try{await fetch(url,{method:'POST',body:JSON.stringify({action:'save_doc',doc:d})});pushed++;}catch(e){}}
+  for(const c of clients){try{await fetch(url,{method:'POST',body:JSON.stringify({action:'save_client',client:c})});}catch(e){}}
+  LS.set('last_sync',new Date().toISOString());
+  updateSyncUI('synced');
+  toast('Pushed '+pushed+' docs + '+clients.length+' clients ✓','ok');
+}
+
 function updateSyncUI(state){
   const dot = document.getElementById('sync-dot');
   const lbl = document.getElementById('sync-label');
@@ -1930,6 +2045,35 @@ function exportLocalJSON(){
   a.download='malko_backup_'+new Date().toISOString().split('T')[0]+'.json';
   a.click();
   toast('Backup downloaded ✓','ok');
+}
+
+function importJSON(){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!data.documents&&!data.clients){toast('Invalid backup file','err');return;}
+        if(data.documents){
+          const local=LS.arr('documents');const merged=[...local];
+          data.documents.forEach(d=>{const idx=merged.findIndex(x=>x.docNumber===d.docNumber);if(idx>=0)merged[idx]=d;else merged.push(d);});
+          LS.set('documents',merged);
+        }
+        if(data.clients){
+          const local=LS.arr('clients');const merged=[...local];
+          data.clients.forEach(c=>{if(!merged.find(x=>x.id==c.id))merged.push(c);});
+          LS.set('clients',merged);refreshSelects();
+        }
+        renderDash();
+        toast('Imported '+(data.documents||[]).length+' docs ✓','ok');
+      }catch(e){toast('Failed to parse backup','err');}
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
 }
 
 // ═══════════════════════════════════════════
@@ -1964,13 +2108,19 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderDash();
   updateSyncUI();
 
-  // Auto-sync on load if configured
+  // Auto-sync on load + every 60 seconds if configured
   const url=LS.get('gs_url');
   if(url) syncNow();
+  setInterval(()=>{if(LS.get('gs_url'))syncNow();},60000);
 });
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){closePDF();closeCliModal();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){
+    e.preventDefault();
+    if(!document.getElementById('pg-new-quo').classList.contains('hidden')) saveDoc('q');
+    else if(!document.getElementById('pg-new-inv').classList.contains('hidden')) saveDoc('i');
+  }
 });
 
 // Print styles
