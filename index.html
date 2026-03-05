@@ -1330,7 +1330,7 @@ function collect(t){
   const wrap=document.getElementById(t+'-items');
   const items=[...wrap.children].map(r=>{
     const ins=r.querySelectorAll('input');
-    return{desc:ins[1].value,price:parseFloat(ins[2].value)||0,qty:parseFloat(ins[3].value)||1,amount:parseFloat(ins[4].value)||0};
+    return{desc:ins[0].value,price:parseFloat(ins[1].value)||0,qty:parseFloat(ins[2].value)||1,amount:parseFloat(ins[3].value)||0};
   }).filter(i=>i.desc.trim());
   const disc=parseFloat(document.getElementById(t+'-disc').value)||0;
   const taxR=parseFloat(document.getElementById(t+'-tax').value)||0;
