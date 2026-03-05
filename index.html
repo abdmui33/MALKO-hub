@@ -631,13 +631,11 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.2}
     </div>
   </div>
   <div class="sb-nav">
-    <div class="sb-section">Overview</div>
-    <div class="sb-item active" onclick="nav('dashboard',this)"><span class="sb-icon">⬡</span>Dashboard</div>
-    <div class="sb-section" style="margin-top:8px">Create</div>
+    <div class="sb-section">Create</div>
     <div class="sb-item" onclick="nav('new-quo',this)"><span class="sb-icon">◈</span>New Quotation</div>
     <div class="sb-item" onclick="nav('new-inv',this)"><span class="sb-icon">◉</span>New Invoice</div>
     <div class="sb-section" style="margin-top:8px">Records</div>
-    <div class="sb-item" onclick="nav('tracker',this)"><span class="sb-icon">◫</span>Job Tracker</div>
+    <div class="sb-item active" onclick="nav('tracker',this)"><span class="sb-icon">◫</span>Job Tracker</div>
     <div class="sb-item" onclick="nav('clients',this)"><span class="sb-icon">◎</span>Clients</div>
     <div class="sb-section" style="margin-top:8px">Finance</div>
     <div class="sb-item" onclick="nav('pl',this)"><span class="sb-icon">◰</span>P&amp;L Report</div>
@@ -655,7 +653,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.2}
 <div class="main">
 
 <!-- ═══════════ DASHBOARD ═══════════ -->
-<div id="pg-dashboard" class="page">
+<div id="pg-dashboard" class="page hidden">
   <div class="topbar">
     <div>
       <div class="topbar-title">Good day, Muizz 👋</div>
@@ -858,19 +856,33 @@ This is a computer-generated document.</textarea></div>
 </div>
 
 <!-- ═══════════ TRACKER ═══════════ -->
-<div id="pg-tracker" class="page hidden">
+<div id="pg-tracker" class="page">
   <div class="topbar">
-    <div><div class="topbar-title">Job Tracker</div><div class="topbar-sub">All documents with status &amp; cost tracking</div></div>
+    <div><div class="topbar-title">Job Tracker</div><div class="topbar-sub" id="dash-date"></div></div>
+    <div style="display:flex;gap:4px">
+      <button class="btn btn-ghost btn-xs" id="dash-all" onclick="setDashPeriod('all')" style="color:var(--accent);border-color:var(--accent);background:var(--accentpale)">All</button>
+      <button class="btn btn-ghost btn-xs" id="dash-year" onclick="setDashPeriod('year')">This Year</button>
+      <button class="btn btn-ghost btn-xs" id="dash-month" onclick="setDashPeriod('month')">This Month</button>
+    </div>
     <div class="topbar-actions">
-      <input type="text" id="search" placeholder="Search client / doc no..." style="width:220px;padding:7px 12px;font-size:12px" oninput="renderTracker()">
+      <button class="btn btn-ghost" onclick="nav('new-quo',document.querySelector('[onclick*=new-quo]'))">+ Quotation</button>
+      <button class="btn btn-primary" onclick="nav('new-inv',document.querySelector('[onclick*=new-inv]'))">+ Invoice</button>
+      <input type="text" id="search" placeholder="Search client / doc no..." style="width:200px;padding:7px 12px;font-size:12px" oninput="renderTracker()">
     </div>
   </div>
   <div class="content">
+    <div id="setup-banner-wrap"></div>
+    <div class="stats" id="dash-stats" style="margin-bottom:20px">
+      <div class="stat stat-accent"><div class="stat-label">Total Invoiced</div><div class="stat-val" id="s-inv">RM 0</div><div class="stat-sub" id="s-inv-c">0 invoices</div></div>
+      <div class="stat stat-gold"><div class="stat-label">Net to Malko</div><div class="stat-val" id="s-net">RM 0</div><div class="stat-sub">after vendor costs</div></div>
+      <div class="stat stat-warn"><div class="stat-label">Outstanding</div><div class="stat-val" id="s-out">RM 0</div><div class="stat-sub" id="s-out-c">unpaid invoices</div></div>
+      <div class="stat"><div class="stat-label">Vendor Payables</div><div class="stat-val" id="s-vend">RM 0</div><div class="stat-sub">owed to suppliers</div></div>
+    </div>
     <div style="display:flex;gap:8px;margin-bottom:16px" id="trk-filters">
       <div class="btn btn-ghost btn-sm active-filter" onclick="setFilter('all',this)">All</div>
       <div class="btn btn-ghost btn-sm" onclick="setFilter('QUO',this)">Quotations</div>
       <div class="btn btn-ghost btn-sm" onclick="setFilter('INV',this)">Invoices</div>
-      <div class="btn btn-ghost btn-sm" onclick="setFilter('paid',this)">Paid</div>
+      <div class="btn btn-ghost btn-sm" onclick="setFilter('paid',this)">Received</div>
       <div class="btn btn-ghost btn-sm" onclick="setFilter('pending',this)">Pending</div>
     </div>
     <div class="card">
@@ -1159,7 +1171,7 @@ function nav(pg, el){
   document.getElementById('pg-'+pg).classList.remove('hidden');
   if(el) el.classList.add('active');
   if(pg==='dashboard') renderDash();
-  if(pg==='tracker') renderTracker();
+  if(pg==='tracker'){renderDash();renderTracker();}
   if(pg==='clients') renderCli();
   if(pg==='pl') renderPL();
   if(pg==='new-quo'){
@@ -1529,26 +1541,6 @@ function renderDash(){
     bannerWrap.innerHTML='';
   }
 
-  // Recent tables
-  const ibody=document.getElementById('d-inv-body');
-  const recent5inv=[...invs].reverse().slice(0,5);
-  ibody.innerHTML=recent5inv.length?recent5inv.map(d=>`
-    <tr>
-      <td class="mono accent" style="font-size:11px">${d.docNumber}</td>
-      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.clientName}</td>
-      <td class="mono" style="font-size:11px">${fmtM(d.total)}</td>
-      <td><span class="badge badge-${d.status}">${d.status}</span></td>
-    </tr>`).join(''):`<tr><td colspan="4" class="empty-sub" style="text-align:center;padding:20px">No invoices yet</td></tr>`;
-
-  const qbody=document.getElementById('d-quo-body');
-  const recent5quo=[...quos].reverse().slice(0,5);
-  qbody.innerHTML=recent5quo.length?recent5quo.map(d=>`
-    <tr>
-      <td class="mono" style="font-size:11px;color:#A5B4FC">${d.docNumber}</td>
-      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.clientName}</td>
-      <td class="mono" style="font-size:11px">${fmtM(d.total)}</td>
-      <td style="font-size:11px" class="muted">${d.date||''}</td>
-    </tr>`).join(''):`<tr><td colspan="4" class="empty-sub" style="text-align:center;padding:20px">No quotations yet</td></tr>`;
 }
 
 // ═══════════════════════════════════════════
@@ -1575,14 +1567,26 @@ function renderTracker(){
   if(!docs.length){tbody.innerHTML='';empty.classList.remove('hidden');return;}
   empty.classList.add('hidden');
 
-  tbody.innerHTML=[...docs].reverse().map(d=>{
+  // 1b: sort by date, newest first
+  const sorted=[...docs].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+
+  // 1c: accumulate totals while building rows
+  let tRev=0,tCost=0,tNet=0;
+  const rows=sorted.map(d=>{
     const cost=(d.costs||[]).reduce((s,c)=>s+parseFloat(c.amount||0),0);
     const gross=parseFloat(d.total||0)-cost;
     const net=gross*((d.malkoShare||100)/100);
     const hasCosts=d.type==='INV'&&cost>0;
-    const grossPct=d.total>0?Math.round(gross/d.total*100):100;
+    tRev+=parseFloat(d.total||0);
+    if(hasCosts) tCost+=cost;
+    if(d.type==='INV') tNet+=net;
+    // 1a: first line item as subtitle under doc number
+    const title=(d.items&&d.items[0]?d.items[0].desc:'').split('\n')[0];
     return`<tr>
-      <td class="mono" style="font-size:11px;color:${d.type==='INV'?'var(--gold)':'#A5B4FC'};font-weight:600">${d.docNumber}</td>
+      <td>
+        <div class="mono" style="font-size:11px;color:${d.type==='INV'?'var(--gold)':'#A5B4FC'};font-weight:600">${d.docNumber}</div>
+        ${title?`<div style="font-size:10px;color:var(--text3);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">${title}</div>`:''}
+      </td>
       <td><span class="badge badge-${d.type.toLowerCase()}">${d.type}</span></td>
       <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${d.clientName}</td>
       <td class="mono" style="font-size:11px">${fmtM(d.total)}</td>
@@ -1594,7 +1598,7 @@ function renderTracker(){
           <option ${d.status==='draft'?'selected':''} value="draft">Draft</option>
           <option ${d.status==='sent'?'selected':''} value="sent">Sent</option>
           <option ${d.status==='pending'?'selected':''} value="pending">Pending</option>
-          <option ${d.status==='paid'?'selected':''} value="paid">Paid ✓</option>
+          <option ${d.status==='paid'?'selected':''} value="paid">Received ✓</option>
           <option ${d.status==='cancelled'?'selected':''} value="cancelled">Cancelled</option>
         </select>
       </td>
@@ -1607,7 +1611,18 @@ function renderTracker(){
         </div>
       </td>
     </tr>`;
-  }).join('');
+  });
+
+  // 1c: totals footer row
+  const totRow=`<tr style="background:rgba(0,200,150,0.06);border-top:1px solid var(--accent)">
+    <td colspan="3" style="padding:10px 14px;font-family:var(--mono);font-size:9px;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase">Total · ${docs.length} record${docs.length!==1?'s':''}</td>
+    <td class="mono" style="font-size:11px;font-weight:600;color:var(--text0)">${fmtM(tRev)}</td>
+    <td class="mono warn" style="font-size:11px;font-weight:600">${tCost>0?fmtM(tCost):'—'}</td>
+    <td class="mono accent" style="font-size:11px;font-weight:600">${fmtM(tNet)}</td>
+    <td colspan="3"></td>
+  </tr>`;
+
+  tbody.innerHTML=rows.join('')+totRow;
 }
 
 function updStatus(num,status){
@@ -2106,6 +2121,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   addLI('q'); addLI('i');
   refreshSelects();
   renderDash();
+  renderTracker();
   updateSyncUI();
 
   // Auto-sync on load + every 60 seconds if configured
