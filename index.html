@@ -615,13 +615,59 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.2}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--g4);border-radius:2px}
 ::-webkit-scrollbar-thumb:hover{background:var(--accent3)}
+
+/* ── HAMBURGER ── */
+.hamburger{
+  display:none;
+  position:fixed;top:14px;left:14px;z-index:150;
+  background:var(--g2);border:1px solid var(--border2);
+  border-radius:8px;padding:9px 10px;cursor:pointer;
+  flex-direction:column;gap:4px;align-items:center;
+}
+.hamburger span{display:block;width:18px;height:2px;background:var(--text2);border-radius:2px}
+
+/* ── SIDEBAR OVERLAY ── */
+.sidebar-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.55);z-index:99;
+}
+.sidebar-overlay.show{display:block}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .hamburger{display:flex}
+  .sidebar{transform:translateX(-220px);transition:transform 0.25s ease}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .topbar{padding:12px 16px 12px 56px;flex-wrap:wrap;gap:8px}
+  .topbar-actions{flex-wrap:wrap;gap:6px;width:100%}
+  .topbar-actions input[type=text]{width:100%!important}
+  .actbar{padding:12px 16px;flex-wrap:wrap}
+  .content{padding:16px}
+  .f2,.f3,.f4{grid-template-columns:1fr!important}
+  .span2,.span3,.span4{grid-column:span 1!important}
+  .li-hd,.li-row{grid-template-columns:24px 1fr 80px 50px 80px 30px;gap:4px;padding:6px 10px}
+  .cost-hd,.cost-row{grid-template-columns:1fr 90px 90px 30px;gap:4px;padding:6px 10px}
+  .cost-hd span:nth-child(3),.cost-row select:first-of-type{display:none}
+  .stats{grid-template-columns:repeat(2,1fr)!important}
+  .tbl th:nth-child(5),.tbl td:nth-child(5),
+  .tbl th:nth-child(6),.tbl td:nth-child(6){display:none}
+}
+@media(max-width:480px){
+  .stats{grid-template-columns:1fr!important}
+  .topbar-title{font-size:16px}
+  .tbl th:nth-child(4),.tbl td:nth-child(4){display:none}
+}
 </style>
 </head>
 <body>
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menu"><span></span><span></span><span></span></button>
+<div class="sidebar-overlay" id="sb-overlay" onclick="toggleSidebar()"></div>
+
 <div class="app">
 
 <!-- ── SIDEBAR ── -->
-<nav class="sidebar">
+<nav class="sidebar" id="sidebar">
   <div class="sb-brand">
     <div class="sb-logo">malko<span>›</span></div>
     <div class="sb-tag">Business Hub v2</div>
@@ -651,44 +697,6 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.2}
 
 <!-- ── MAIN ── -->
 <div class="main">
-
-<!-- ═══════════ DASHBOARD ═══════════ -->
-<div id="pg-dashboard" class="page hidden">
-  <div class="topbar">
-    <div>
-      <div class="topbar-title">Good day, Muizz 👋</div>
-      <div class="topbar-sub" id="dash-date"></div>
-    </div>
-    <div style="display:flex;gap:4px">
-      <button class="btn btn-ghost btn-xs" id="dash-all" onclick="setDashPeriod('all')" style="color:var(--accent);border-color:var(--accent);background:var(--accentpale)">All</button>
-      <button class="btn btn-ghost btn-xs" id="dash-year" onclick="setDashPeriod('year')">This Year</button>
-      <button class="btn btn-ghost btn-xs" id="dash-month" onclick="setDashPeriod('month')">This Month</button>
-    </div>
-    <div class="topbar-actions">
-      <button class="btn btn-ghost" onclick="nav('new-quo',document.querySelector('[onclick*=new-quo]'))">+ Quotation</button>
-      <button class="btn btn-primary" onclick="nav('new-inv',document.querySelector('[onclick*=new-inv]'))">+ Invoice</button>
-    </div>
-  </div>
-  <div class="content">
-    <div id="setup-banner-wrap"></div>
-    <div class="stats" id="dash-stats">
-      <div class="stat stat-accent"><div class="stat-label">Total Invoiced</div><div class="stat-val" id="s-inv">RM 0</div><div class="stat-sub" id="s-inv-c">0 invoices</div></div>
-      <div class="stat stat-gold"><div class="stat-label">Net to Malko</div><div class="stat-val" id="s-net">RM 0</div><div class="stat-sub">after vendor costs</div></div>
-      <div class="stat stat-warn"><div class="stat-label">Outstanding</div><div class="stat-val" id="s-out">RM 0</div><div class="stat-sub" id="s-out-c">unpaid invoices</div></div>
-      <div class="stat"><div class="stat-label">Vendor Payables</div><div class="stat-val" id="s-vend">RM 0</div><div class="stat-sub">owed to suppliers</div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div class="card">
-        <div class="card-hd">Recent Invoices <button class="btn btn-ghost btn-xs" onclick="nav('tracker',document.querySelector('[onclick*=tracker]'))">All →</button></div>
-        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>No.</th><th>Client</th><th>Amount</th><th>Status</th></tr></thead><tbody id="d-inv-body"></tbody></table></div>
-      </div>
-      <div class="card">
-        <div class="card-hd">Recent Quotations <button class="btn btn-ghost btn-xs" onclick="nav('tracker',document.querySelector('[onclick*=tracker]'))">All →</button></div>
-        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>No.</th><th>Client</th><th>Amount</th><th>Date</th></tr></thead><tbody id="d-quo-body"></tbody></table></div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ═══════════ NEW QUOTATION ═══════════ -->
 <div id="pg-new-quo" class="page hidden">
@@ -1041,6 +1049,7 @@ const LS = {
 let trkFilter = 'all';
 let currentPreviewDoc = null;
 let dashPeriod = 'all';
+let currentEditNum = null;
 
 // ═══════════════════════════════════════════
 // SEED DATA — all 15 existing jobs pre-loaded
@@ -1175,14 +1184,19 @@ function nav(pg, el){
   if(pg==='clients') renderCli();
   if(pg==='pl') renderPL();
   if(pg==='new-quo'){
+    currentEditNum=null;
     document.getElementById('q-num').value = nextNum('q');
     document.getElementById('quo-pill').textContent = document.getElementById('q-num').value;
   }
   if(pg==='new-inv'){
+    currentEditNum=null;
     document.getElementById('i-num').value = nextNum('i');
     document.getElementById('inv-pill').textContent = document.getElementById('i-num').value;
   }
   if(pg==='settings') renderSettings();
+  // Auto-close sidebar on mobile after navigation
+  const sb=document.getElementById('sidebar');
+  if(sb&&sb.classList.contains('open')) toggleSidebar();
 }
 
 // ═══════════════════════════════════════════
@@ -1357,7 +1371,12 @@ function saveDoc(t){
   if(!data.items.length){toast('Add at least one line item','err');return false;}
   const docs=LS.arr('documents');
   const idx=docs.findIndex(d=>d.docNumber===data.docNumber);
+  if(idx>=0 && data.docNumber!==currentEditNum){
+    toast(data.docNumber+' already exists! Change the doc number.','err');
+    return false;
+  }
   if(idx>=0) docs[idx]=data; else docs.push(data);
+  currentEditNum=data.docNumber;
   LS.set('documents',docs);
   autoSaveCli(data);
   toast(data.docNumber+' saved ✓','ok');
@@ -1571,6 +1590,7 @@ function renderTracker(){
   const sorted=[...docs].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
 
   // 1c: accumulate totals while building rows
+  const todayMs=new Date().setHours(0,0,0,0);
   let tRev=0,tCost=0,tNet=0;
   const rows=sorted.map(d=>{
     const cost=(d.costs||[]).reduce((s,c)=>s+parseFloat(c.amount||0),0);
@@ -1582,6 +1602,11 @@ function renderTracker(){
     if(d.type==='INV') tNet+=net;
     // 1a: first line item as subtitle under doc number
     const title=(d.items&&d.items[0]?d.items[0].desc:'').split('\n')[0];
+    // Overdue indicator
+    const dueMs=d.dueDate?new Date(d.dueDate+'T00:00:00').getTime():null;
+    const isOverdue=d.type==='INV'&&dueMs&&!['paid','cancelled'].includes(d.status)&&dueMs<todayMs;
+    const daysOver=isOverdue?Math.floor((todayMs-dueMs)/86400000):0;
+    const overdueBadge=isOverdue?`<div style="margin-top:3px;font-size:9px;font-family:var(--mono);color:var(--warn);letter-spacing:0.3px">⚠ ${daysOver}d overdue</div>`:'';
     return`<tr>
       <td>
         <div class="mono" style="font-size:11px;color:${d.type==='INV'?'var(--gold)':'#A5B4FC'};font-weight:600">${d.docNumber}</div>
@@ -1601,6 +1626,7 @@ function renderTracker(){
           <option ${d.status==='paid'?'selected':''} value="paid">Received ✓</option>
           <option ${d.status==='cancelled'?'selected':''} value="cancelled">Cancelled</option>
         </select>
+        ${overdueBadge}
       </td>
       <td>
         <div style="display:flex;gap:5px;flex-wrap:wrap">
@@ -1651,6 +1677,7 @@ function editDoc(num){
   const t=d.type==='INV'?'i':'q';
   const pg=d.type==='INV'?'new-inv':'new-quo';
   nav(pg,document.querySelector(`[onclick*="${pg}"]`));
+  currentEditNum=num;
   document.getElementById(t+'-cname').value=d.clientName||'';
   document.getElementById(t+'-cattn').value=d.clientAttn||'';
   document.getElementById(t+'-caddr').value=d.clientAddr||'';
@@ -2138,6 +2165,13 @@ document.addEventListener('keydown',e=>{
     else if(!document.getElementById('pg-new-inv').classList.contains('hidden')) saveDoc('i');
   }
 });
+
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('sb-overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
 
 // Print styles
 const style=document.createElement('style');
