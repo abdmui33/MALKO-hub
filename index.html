@@ -8,27 +8,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
-  --g0: #0A0F0D;
-  --g1: #111A16;
-  --g2: #1A2820;
-  --g3: #243530;
-  --g4: #2F4840;
-  --accent: #00C896;
-  --accent2: #00A87D;
-  --accent3: #007A5A;
-  --accentglow: rgba(0,200,150,0.15);
-  --accentpale: rgba(0,200,150,0.07);
-  --text0: #F0FBF6;
-  --text1: #B8D4C8;
-  --text2: #7A9E90;
-  --text3: #4A6E60;
-  --border: rgba(0,200,150,0.12);
-  --border2: rgba(255,255,255,0.06);
-  --warn: #FF6B4A;
-  --warnpale: rgba(255,107,74,0.12);
+  --g0: #090B14;
+  --g1: #0F1221;
+  --g2: #161A2E;
+  --g3: #1E2340;
+  --g4: #262D52;
+  --accent: #2347C5;
+  --accent2: #1A3AAD;
+  --accent3: #122E95;
+  --accentglow: rgba(35,71,197,0.18);
+  --accentpale: rgba(35,71,197,0.08);
+  --text0: #F0F2FB;
+  --text1: #B8C0D8;
+  --text2: #7A86A8;
+  --text3: #4A5680;
+  --border: rgba(35,71,197,0.18);
+  --border2: rgba(255,255,255,0.07);
+  --warn: #E8453A;
+  --warnpale: rgba(232,69,58,0.12);
   --gold: #F0B429;
   --goldpale: rgba(240,180,41,0.1);
-  --card: rgba(26,40,32,0.8);
+  --card: rgba(22,26,46,0.85);
   --radius: 10px;
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Outfit', sans-serif;
@@ -463,30 +463,30 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.2}
   min-height:900px;
 }
 .pdoc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px}
-.pdoc-logo{font-size:28px;font-weight:800;color:#0A0F0D;letter-spacing:-1px}
-.pdoc-logo span{color:#00C896}
+.pdoc-logo{font-size:28px;font-weight:800;color:#2E2E44;letter-spacing:-1px}
+.pdoc-logo span{color:#E8453A}
 .pdoc-tagline{font-size:10px;color:#888;margin-top:2px;font-family:'Outfit',sans-serif}
 .pdoc-info{font-size:10.5px;color:#555;margin-top:8px;line-height:1.7}
 .pdoc-type{text-align:right}
 .pdoc-typename{
   font-size:34px;font-weight:800;
-  color:#00A87D;letter-spacing:-1px;
+  color:#2347C5;letter-spacing:-1px;
   text-transform:uppercase;
 }
 .pdoc-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:#666;margin-top:6px;line-height:1.9;text-align:right}
 .pdoc-meta strong{color:#111}
-.pdoc-divider{height:2px;background:linear-gradient(90deg,#00C896,#E8F7F2);border:none;margin:22px 0}
+.pdoc-divider{height:2px;background:linear-gradient(90deg,#2347C5,#E8ECF8);border:none;margin:22px 0}
 .pdoc-billto{margin-bottom:26px}
 .pdoc-billlabel{
   font-family:'JetBrains Mono',monospace;
   font-size:8.5px;letter-spacing:1.5px;
-  text-transform:uppercase;color:#00A87D;margin-bottom:5px;
+  text-transform:uppercase;color:#2347C5;margin-bottom:5px;
 }
 .pdoc-billname{font-size:15px;font-weight:700;color:#111}
 .pdoc-billsub{font-size:11px;color:#666;margin-top:3px;line-height:1.6}
 
 .pdoc-table{width:100%;border-collapse:collapse;margin-bottom:0}
-.pdoc-table thead tr{background:#0A0F0D}
+.pdoc-table thead tr{background:#2E2E44}
 .pdoc-table th{
   padding:9px 13px;
   font-family:'JetBrains Mono',monospace;
@@ -496,28 +496,28 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.2}
 .pdoc-table th.r,.pdoc-table td.r{text-align:right}
 .pdoc-table td{
   padding:10px 13px;font-size:12px;
-  border-bottom:1px solid #EEF2F0;
+  border-bottom:1px solid #EEEEF4;
   vertical-align:top;
 }
-.pdoc-table tr:nth-child(even) td{background:#F7FCF9}
+.pdoc-table tr:nth-child(even) td{background:#F5F6FB}
 .pdoc-totals{display:flex;justify-content:flex-end}
-.pdoc-totbox{min-width:250px;background:#F7FCF9;padding:14px 16px}
+.pdoc-totbox{min-width:250px;background:#F5F6FB;padding:14px 16px}
 .pdoc-totrow{display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666}
 .pdoc-totgrand{
-  border-top:2px solid #00C896;margin-top:7px;padding-top:9px;
+  border-top:2px solid #2347C5;margin-top:7px;padding-top:9px;
   color:#111;font-weight:700;font-size:14px;
 }
-.pdoc-totgrand .pdoc-amt{color:#00A87D;font-size:17px;font-family:'JetBrains Mono',monospace}
+.pdoc-totgrand .pdoc-amt{color:#2347C5;font-size:17px;font-family:'JetBrains Mono',monospace}
 .pdoc-amt{font-family:'JetBrains Mono',monospace;font-size:11.5px}
 .pdoc-footer{
   margin-top:32px;padding-top:18px;
-  border-top:1px solid #EEF2F0;
+  border-top:1px solid #EEEEF4;
   display:flex;justify-content:space-between;align-items:flex-end;
 }
 .pdoc-terms{font-size:10.5px;color:#888;max-width:320px;line-height:1.65}
 .pdoc-terms strong{color:#555}
 .pdoc-bank{text-align:right}
-.pdoc-banklabel{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:#00A87D;margin-bottom:4px}
+.pdoc-banklabel{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:#2347C5;margin-bottom:4px}
 .pdoc-bankinfo{font-size:10.5px;color:#666;line-height:1.7;font-family:'JetBrains Mono',monospace}
 .pdoc-sig{margin-top:36px;text-align:right}
 .pdoc-sigline{width:180px;height:1px;background:#ccc;margin-left:auto;margin-bottom:6px}
@@ -669,7 +669,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.2}
 <!-- ── SIDEBAR ── -->
 <nav class="sidebar" id="sidebar">
   <div class="sb-brand">
-    <div class="sb-logo">malko<span>›</span></div>
+    <div class="sb-logo">malko<span style="color:#E8453A;font-size:20px;vertical-align:super;line-height:0;margin-left:1px">›</span></div>
     <div class="sb-tag">Business Hub v2</div>
     <div class="sb-sync">
       <div class="sync-dot" id="sync-dot"></div>
@@ -961,9 +961,25 @@ This is a computer-generated document.</textarea></div>
 <!-- ═══════════ SETTINGS ═══════════ -->
 <div id="pg-settings" class="page hidden">
   <div class="topbar">
-    <div><div class="topbar-title">Sync Setup</div><div class="topbar-sub">Connect to Google Sheets for cross-device access</div></div>
+    <div><div class="topbar-title">Settings</div><div class="topbar-sub">Brand logo, Google Sheets sync &amp; data management</div></div>
   </div>
   <div class="content">
+    <div class="fsec" style="max-width:680px">
+      <div class="fsec-hd">🖼️ Brand Logo</div>
+      <div class="fsec-body">
+        <div id="logo-preview" style="min-height:64px;display:flex;align-items:center;padding:14px 16px;background:var(--g0);border:1px solid var(--border2);border-radius:8px;margin-bottom:14px">
+          <span style="color:var(--text3);font-size:12px">No logo uploaded — PDF will use text logo</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <label class="btn btn-primary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+            ⬆ Upload Logo
+            <input type="file" accept="image/*" onchange="uploadLogo(this)" style="display:none">
+          </label>
+          <button class="btn btn-ghost" onclick="clearLogo()">✕ Remove Logo</button>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text2)">Appears on all PDF quotations &amp; invoices. Recommended: PNG or JPG, transparent or white background.</div>
+      </div>
+    </div>
     <div class="fsec" style="max-width:680px">
       <div class="fsec-hd">🔗 Google Apps Script URL</div>
       <div class="fsec-body">
@@ -1436,6 +1452,8 @@ function fmtD(d){if(!d)return'';try{return new Date(d+'T00:00:00').toLocaleDateS
 function fmtM(n){return'RM '+(parseFloat(n)||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
 
 function showPDF(doc){
+  const logoDataUrl=LS.get('logo');
+  const logoHtml=logoDataUrl?`<img src="${logoDataUrl}" style="max-height:80px;max-width:280px;display:block;margin-bottom:4px;object-fit:contain" alt="Logo">`:`<div class="pdoc-logo">malko<span style="color:#E8453A">›</span></div><div class="pdoc-tagline">Solutions Engineering . Value Delivered</div>`;
   const isInv=doc.type==='INV';
   const rows=doc.items.map((item,i)=>`
     <tr>
@@ -1450,8 +1468,7 @@ function showPDF(doc){
     <div class="pdoc" id="the-pdoc">
       <div class="pdoc-head">
         <div>
-          <div class="pdoc-logo">malko<span>›</span></div>
-          <div class="pdoc-tagline">Solutions Engineered, Value Delivered</div>
+          ${logoHtml}
           <div class="pdoc-info">MALKO SOLUTIONS &nbsp;|&nbsp; JR0170620-X<br>59, Tingkat 2, Jalan Tuanku Antah, 70100 Seremban, NS<br>+6017-2330580 &nbsp;|&nbsp; malkosolutions@gmail.com</div>
         </div>
         <div class="pdoc-type">
@@ -1947,11 +1964,35 @@ function doGet(e) {
   return doPost({postData:{contents:JSON.stringify({action:'get_all'})}});
 }`;
 
+function uploadLogo(input){
+  const file=input.files[0];
+  if(!file) return;
+  if(file.size>3*1024*1024){toast('Image too large — keep under 3 MB','err');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    LS.set('logo',e.target.result);
+    renderSettings();
+    toast('Logo uploaded ✓','ok');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearLogo(){
+  localStorage.removeItem('mk2_logo');
+  renderSettings();
+  toast('Logo removed','ok');
+}
+
 function renderSettings(){
   document.getElementById('gas-code').textContent = GAS_SCRIPT;
   const url = LS.get('gs_url')||'';
   document.getElementById('gs-url').value = url;
   updateSyncUI();
+  const logo=LS.get('logo');
+  const lp=document.getElementById('logo-preview');
+  if(lp) lp.innerHTML=logo
+    ?`<img src="${logo}" style="max-height:80px;max-width:280px;object-fit:contain;border-radius:6px;display:block">`
+    :`<span style="color:var(--text3);font-size:12px">No logo uploaded — PDF will use text logo</span>`;
 }
 
 function copyGAS(){
@@ -2175,7 +2216,7 @@ function toggleSidebar(){
 
 // Print styles
 const style=document.createElement('style');
-style.textContent=`@media print{body *{display:none!important}.pdoc{display:block!important}.pdoc *{display:revert!important}@page{margin:0.4in;size:A4}}`;
+style.textContent=`@media print{body *{display:none!important}.overlay,.overlay-inner,#pdf-content,.pdoc{display:block!important}.overlay-bar{display:none!important}.pdoc *{display:revert!important}@page{margin:0.4in;size:A4}}`;
 document.head.appendChild(style);
 </script>
 </body>
