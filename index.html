@@ -1511,10 +1511,6 @@ function showPDF(doc){
           <div class="pdoc-bankinfo">MALKO SOLUTIONS<br>CIMB Bank Berhad<br>8606011612</div>
         </div>
       </div>
-      <div class="pdoc-sig">
-        <div class="pdoc-sigline"></div>
-        <div class="pdoc-signame">Muizz Zainuddin<br><span style="color:#999;font-size:9.5px">Alliance Director | Founder, Malko Solutions</span></div>
-      </div>
     </div>`;
   document.getElementById('pdf-overlay').classList.remove('hidden');
 }
@@ -2216,7 +2212,7 @@ function toggleSidebar(){
 
 // Print styles
 const style=document.createElement('style');
-style.textContent=`@media print{body *{display:none!important}.overlay,.overlay-inner,#pdf-content,.pdoc{display:block!important}.overlay-bar{display:none!important}.pdoc *{display:revert!important}@page{margin:0.4in;size:A4}}`;
+style.textContent=`@media print{body>*{display:none!important}.overlay{display:block!important;position:static!important;background:none!important;overflow:visible!important}.overlay-inner{display:block!important;max-height:none!important;overflow:visible!important;background:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;max-width:none!important;margin:0!important}.overlay-bar,.pdoc-sig{display:none!important}#pdf-content{display:block!important}.pdoc{display:block!important}@page{margin:0.4in;size:A4}}`;
 document.head.appendChild(style);
 </script>
 </body>
