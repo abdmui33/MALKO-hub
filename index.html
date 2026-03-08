@@ -779,7 +779,7 @@ This is a computer-generated document.</textarea></div>
         <div class="fgrid f4">
           <div class="fgrp"><label>Invoice No.</label><input id="i-num" oninput="document.getElementById('inv-pill').textContent=this.value"></div>
           <div class="fgrp"><label>Invoice Date</label><input type="date" id="i-date"></div>
-          <div class="fgrp"><label>Due Date</label><input type="date" id="i-due"></div>
+          <div class="fgrp"><label>Payment Terms</label><select id="i-payterms" onchange="applyPayTerms()"><option value="7">Due in 7 days</option><option value="14">Due in 14 days</option><option value="30" selected>Due in 30 days</option><option value="60">Due in 60 days</option><option value="receipt">Upon Receipt</option><option value="50-50">50% Upfront / 50% on Delivery</option></select></div>
           <div class="fgrp"><label>Ref Quotation</label><input id="i-refq" placeholder="QUO-xxx"></div>
           <div class="fgrp"><label>Payment Date</label><input type="date" id="i-pdate" title="Date payment was received"></div>
         </div>
@@ -1208,6 +1208,8 @@ function nav(pg, el){
     currentEditNum=null;
     document.getElementById('i-num').value = nextNum('i');
     document.getElementById('inv-pill').textContent = document.getElementById('i-num').value;
+    document.getElementById('i-payterms').value='30';
+    applyPayTerms();
   }
   if(pg==='settings') renderSettings();
   // Auto-close sidebar on mobile after navigation
@@ -1342,6 +1344,44 @@ function refreshSelects(){
 // ═══════════════════════════════════════════
 // COLLECT
 // ═══════════════════════════════════════════
+// Payment Terms helpers
+const PAYTERMS_DAYS={'7':7,'14':14,'30':30,'60':60,'receipt':0,'50-50':14};
+const PAYTERMS_TEXT={
+  '7':'Payment due within 7 days of invoice date.',
+  '14':'Payment due within 14 days of invoice date.',
+  '30':'Payment due within 30 days of invoice date.',
+  '60':'Payment due within 60 days of invoice date.',
+  'receipt':'Payment due upon receipt of invoice.',
+  '50-50':'50% payment upon order confirmation. Balance 50% upon delivery/completion.'
+};
+const PAYTERMS_BANK='\nBank: CIMB Bank Berhad\nAccount: MALKO SOLUTIONS\nAcc No: 8606011612\nThis is a computer-generated document.';
+
+function dueFromTerms(dateStr,terms){
+  if(!dateStr) return '';
+  const d=new Date(dateStr+'T00:00:00');
+  const days=PAYTERMS_DAYS[terms]??30;
+  d.setDate(d.getDate()+days);
+  return d.toISOString().split('T')[0];
+}
+
+function guessPayTerms(dateStr,dueDateStr){
+  if(!dateStr||!dueDateStr) return '30';
+  const diff=Math.round((new Date(dueDateStr)-new Date(dateStr))/86400000);
+  if(diff<=0) return 'receipt';
+  if(diff<=7) return '7';
+  if(diff<=14) return '14';
+  if(diff<=30) return '30';
+  if(diff<=60) return '60';
+  return '30';
+}
+
+function applyPayTerms(){
+  const sel=document.getElementById('i-payterms');
+  const txt=document.getElementById('i-terms');
+  if(!sel||!txt) return;
+  txt.value=(PAYTERMS_TEXT[sel.value]||'')+PAYTERMS_BANK;
+}
+
 function collect(t){
   const wrap=document.getElementById(t+'-items');
   const items=[...wrap.children].map(r=>{
@@ -1375,7 +1415,7 @@ function collect(t){
   }).filter(c=>c.vendor.trim());
   const share=parseFloat(document.getElementById('i-share').value)||100;
 
-  return{...base,type:'INV',docNumber:document.getElementById('i-num').value,date:document.getElementById('i-date').value,dueDate:document.getElementById('i-due').value,refQuo:document.getElementById('i-refq').value,paymentDate:document.getElementById('i-pdate').value,notes:document.getElementById('i-notes').value,terms:document.getElementById('i-terms').value,costs,malkoShare:share,status:'pending'};
+  return{...base,type:'INV',docNumber:document.getElementById('i-num').value,date:document.getElementById('i-date').value,dueDate:dueFromTerms(document.getElementById('i-date').value,document.getElementById('i-payterms').value),payTerms:document.getElementById('i-payterms').value,refQuo:document.getElementById('i-refq').value,paymentDate:document.getElementById('i-pdate').value,notes:document.getElementById('i-notes').value,terms:document.getElementById('i-terms').value,costs,malkoShare:share,status:'pending'};
 }
 
 // ═══════════════════════════════════════════
@@ -1476,7 +1516,7 @@ function showPDF(doc){
           <div class="pdoc-meta">
             <strong>${isInv?'Invoice':'Quotation'} No:</strong> ${doc.docNumber}<br>
             <strong>Date:</strong> ${fmtD(doc.date)}<br>
-            ${isInv?`<strong>Due:</strong> ${fmtD(doc.dueDate)}`:` <strong>Valid:</strong> ${doc.validity||14} days`}<br>
+            ${!isInv?`<strong>Valid:</strong> ${doc.validity||14} days<br>`:''}
             ${isInv&&doc.refQuo?`<strong>Ref:</strong> ${doc.refQuo}`:''}
           </div>
         </div>
@@ -1516,7 +1556,18 @@ function showPDF(doc){
 }
 
 function closePDF(){document.getElementById('pdf-overlay').classList.add('hidden');}
-function printPDF(){window.print();}
+function printPDF(){
+  const el=document.getElementById('the-pdoc');
+  if(!el) return window.print();
+  const par=el.parentNode, nxt=el.nextSibling;
+  document.body.appendChild(el);
+  function restore(){
+    nxt ? par.insertBefore(el,nxt) : par.appendChild(el);
+    window.removeEventListener('afterprint',restore);
+  }
+  window.addEventListener('afterprint',restore);
+  window.print();
+}
 
 // ═══════════════════════════════════════════
 // DASHBOARD
@@ -1711,7 +1762,7 @@ function editDoc(num){
     document.getElementById('i-num').value=d.docNumber;
     document.getElementById('inv-pill').textContent=d.docNumber;
     document.getElementById('i-date').value=d.date||'';
-    document.getElementById('i-due').value=d.dueDate||'';
+    document.getElementById('i-payterms').value=d.payTerms||(d.dueDate&&d.date?guessPayTerms(d.date,d.dueDate):'30');
     document.getElementById('i-refq').value=d.refQuo||'';
     document.getElementById('i-pdate').value=d.paymentDate||'';
     document.getElementById('i-costs').innerHTML='';
@@ -2212,7 +2263,7 @@ function toggleSidebar(){
 
 // Print styles
 const style=document.createElement('style');
-style.textContent=`@media print{body>*{display:none!important}.overlay{display:block!important;position:static!important;background:none!important;overflow:visible!important}.overlay-inner{display:block!important;max-height:none!important;overflow:visible!important;background:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;max-width:none!important;margin:0!important}.overlay-bar,.pdoc-sig{display:none!important}#pdf-content{display:block!important}.pdoc{display:block!important}@page{margin:0.4in;size:A4}}`;
+style.textContent=`@media print{body>*:not(#the-pdoc){display:none!important}#the-pdoc{display:block!important;position:static!important;box-shadow:none!important;border-radius:4px!important}@page{margin:0.4in;size:A4}}`;
 document.head.appendChild(style);
 </script>
 </body>
