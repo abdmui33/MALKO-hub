@@ -2265,6 +2265,7 @@ const style=document.createElement('style');
 style.textContent=`@media print{
 body>*:not(#the-pdoc){display:none!important}
 body{background:white!important}
+body::before,body::after{display:none!important}
 #the-pdoc{display:block!important;position:static!important;box-shadow:none!important;border-radius:0!important;background:white!important}
 #the-pdoc *{border-radius:0!important;box-shadow:none!important;text-shadow:none!important}
 #the-pdoc .pdoc-table thead tr{background:none!important;border-top:2px solid #2E2E44!important;border-bottom:2px solid #2E2E44!important}
